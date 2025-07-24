@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Summarizer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f7f6;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 900px;
+            margin-bottom: 20px;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+        textarea {
+            width: calc(100% - 20px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+            resize: vertical;
+            min-height: 150px;
+            margin-bottom: 15px;
+            box-sizing: border-box; /* Include padding in element's total width and height */
+        }
+        .output-box {
+            background-color: #e8f4f8;
+            border: 1px solid #b3e0ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            word-wrap: break-word; /* Ensures long words wrap */
+            white-space: pre-wrap; /* Preserves whitespace and wraps text */
+        }
+        .message {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        .info-message { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .error-message { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .success-message { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .warning-message { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        .slider-container label {
+            min-width: 150px;
+            text-align: right;
+            font-weight: bold;
+        }
+        input[type="range"] {
+            flex-grow: 1;
+            height: 8px;
+            -webkit-appearance: none;
+            background: #ddd;
+            border-radius: 5px;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity .2s;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3498db;
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(0,0,0,0.3);
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3498db;
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(0,0,0,0.3);
+        }
+        #sentenceCountValue {
+            font-weight: bold;
+            color: #3498db;
+            min-width: 20px;
+            text-align: center;
+        }
+        .file-upload-container {
+            border: 2px dashed #a7d9f2;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            background-color: #ecf8ff;
+        }
+        .file-upload-container label {
+            cursor: pointer;
+            background-color: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        .file-upload-container input[type="file"] {
+            display: none;
+        }
+        .file-upload-container label:hover {
+            background-color: #5a6268;
+        }
+        .file-name {
+            margin-top: 10px;
+            font-style: italic;
+            color: #555;
+        }
+        nav {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        nav a {
+            margin: 0 15px;
+            text-decoration: none;
+            color: #3498db;
+            font-weight: bold;
+            font-size: 1.1em;
+            transition: color 0.3s ease;
+        }
+        nav a:hover {
+            color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <a href="/">Home</a>
+            <a href="/summarizer">Text Summarizer</a>
+            <a href="/voice_to_text">Voice to Text</a>
+            <a href="/text_to_voice">Text to Voice</a>
+        </nav>
+        <h1>✍️ Text Summarizer</h1>
+        <p>Enter text or upload a .txt file to get a concise summary.</p>
+
+        <div class="file-upload-container">
+            <h3>Upload Text File (.txt)</h3>
+            <input type="file" id="fileInput" accept=".txt">
+            <label for="fileInput">Choose File</label>
+            <div id="fileName" class="file-name">No file chosen</div>
+        </div>
+        
+        <h3>Or Paste Text Below:</h3>
+        <textarea id="textInput" placeholder="Paste your text here..." rows="12"></textarea>
+        
+        <div class="slider-container">
+            <label for="sentenceCountSlider">Summary Sentence Count:</label>
+            <input type="range" id="sentenceCountSlider" min="1" max="10" value="3">
+            <span id="sentenceCountValue">3</span>
+        </div>
+
+        <div class="button-group">
+            <button id="summarizeBtn">Summarize Text</button>
+            <button id="clearBtn">Clear All</button>
+        </div>
+
+        <div id="statusMessage" class="message info-message">Ready to summarize.</div>
+
+        <div class="output-box" style="display: none;">
+            <h3>Summarized Text:</h3>
+            <p id="summaryOutput"></p>
+        </div>
+    </div>
+
+    <script>
+        const textInput = document.getElementById('textInput');
+        const fileInput = document.getElementById('fileInput');
+        const fileNameDisplay = document.getElementById('fileName');
+        const sentenceCountSlider = document.getElementById('sentenceCountSlider');
+        const sentenceCountValue = document.getElementById('sentenceCountValue');
+        const summarizeBtn = document.getElementById('summarizeBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const statusMessage = document.getElementById('statusMessage');
+        const summaryOutputDiv = document.getElementById('summaryOutput');
+        const outputBox = document.querySelector('.output-box');
+
+        // Initialize slider value display
+        sentenceCountValue.textContent = sentenceCountSlider.value;
+
+        // Event Listeners
+        sentenceCountSlider.addEventListener('input', () => {
+            sentenceCountValue.textContent = sentenceCountSlider.value;
+        });
+
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                fileNameDisplay.textContent = file.name;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    textInput.value = e.target.result;
+                    setStatus('File loaded. Ready to summarize.', 'info-message');
+                };
+                reader.onerror = () => {
+                    setStatus('Error reading file.', 'error-message');
+                };
+                reader.readAsText(file);
+            } else {
+                fileNameDisplay.textContent = 'No file chosen';
+                textInput.value = '';
+            }
+        });
+
+        summarizeBtn.addEventListener('click', summarizeText);
+        clearBtn.addEventListener('click', clearAll);
+
+        function setStatus(message, type = 'info-message') {
+            statusMessage.textContent = message;
+            statusMessage.className = `message ${type}`;
+        }
+
+        async function summarizeText() {
+            const textToSummarize = textInput.value.trim();
+            const sentenceCount = parseInt(sentenceCountSlider.value);
+
+            if (!textToSummarize) {
+                setStatus('Please enter text or upload a file to summarize.', 'warning-message');
+                outputBox.style.display = 'none';
+                return;
+            }
+
+            setStatus('Summarizing...', 'info-message');
+            summaryOutputDiv.textContent = 'Processing...';
+            outputBox.style.display = 'block';
+            summarizeBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/summarize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text: textToSummarize, sentences: sentenceCount })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`Server error: ${response.status} - ${errorData.error || response.statusText}`);
+                }
+
+                const data = await response.json();
+                summaryOutputDiv.textContent = data.summary || 'No summary generated.';
+                setStatus('Text summarized successfully!', 'success-message');
+
+            } catch (error) {
+                console.error("Error during summarization:", error);
+                summaryOutputDiv.textContent = 'Error: Could not generate summary.';
+                setStatus(`Error: ${error.message}`, 'error-message');
+            } finally {
+                summarizeBtn.disabled = false;
+            }
+        }
+
+        function clearAll() {
+            textInput.value = '';
+            fileInput.value = ''; // Clear file input
+            fileNameDisplay.textContent = 'No file chosen';
+            sentenceCountSlider.value = 3;
+            sentenceCountValue.textContent = 3;
+            summaryOutputDiv.textContent = '';
+            outputBox.style.display = 'none';
+            setStatus('Ready to summarize.', 'info-message');
+            summarizeBtn.disabled = false;
+        }
+
+    </script>
+</body>
+</html>

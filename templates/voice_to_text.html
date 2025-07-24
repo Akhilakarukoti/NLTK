@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice to Text</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f7f6;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 900px;
+            margin-bottom: 20px;
+        }
+        h1, h2 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+        textarea {
+            width: calc(100% - 20px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+            resize: vertical;
+            min-height: 150px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+        .message {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        .info-message { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .error-message { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .success-message { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .warning-message { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        nav {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        nav a {
+            margin: 0 15px;
+            text-decoration: none;
+            color: #3498db;
+            font-weight: bold;
+            font-size: 1.1em;
+            transition: color 0.3s ease;
+        }
+        nav a:hover {
+            color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <a href="/">Home</a>
+            <a href="/summarizer">Text Summarizer</a>
+            <a href="/voice_to_text">Voice to Text</a>
+            <a href="/text_to_voice">Text to Voice</a>
+        </nav>
+        <h1>🎤 Voice to Text (Speech Recognition)</h1>
+        <p>Click "Start Recording", speak clearly into your microphone, then click "Stop Recording" to see the transcription.</p>
+
+        <div class="button-group">
+            <button id="startRecordingBtn">Start Recording</button>
+            <button id="stopRecordingBtn" disabled>Stop Recording</button>
+        </div>
+
+        <div id="statusMessage" class="message info-message">Click "Start Recording" to begin.</div>
+
+        <h3>Transcribed Text:</h3>
+        <textarea id="transcribedTextOutput" placeholder="Your spoken words will appear here..." rows="10" readonly></textarea>
+        
+        <div class="button-group">
+            <button id="clearBtn">Clear Text</button>
+        </div>
+    </div>
+
+    <script>
+        let recognition; // Web Speech API SpeechRecognition object
+        let isRecording = false;
+
+        // DOM Elements
+        const startRecordingBtn = document.getElementById('startRecordingBtn');
+        const stopRecordingBtn = document.getElementById('stopRecordingBtn');
+        const statusMessage = document.getElementById('statusMessage');
+        const transcribedTextOutput = document.getElementById('transcribedTextOutput');
+        const clearBtn = document.getElementById('clearBtn');
+
+        // Event Listeners
+        startRecordingBtn.addEventListener('click', startRecording);
+        stopRecordingBtn.addEventListener('click', stopRecording);
+        clearBtn.addEventListener('click', clearText);
+
+        function setStatus(message, type = 'info-message') {
+            statusMessage.textContent = message;
+            statusMessage.className = `message ${type}`;
+        }
+
+        function initializeSpeechRecognition() {
+            if (!('webkitSpeechRecognition' in window)) {
+                setStatus("Web Speech API is not supported by this browser. Try Chrome!", 'error-message');
+                startRecordingBtn.disabled = true;
+                return null;
+            }
+            const SpeechRecognition = window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = true; // For continuous recording until stopped
+            recognition.interimResults = true; // Show interim results as user speaks
+            recognition.lang = 'en-US'; // Set language
+
+            recognition.onstart = () => {
+                isRecording = true;
+                setStatus("Recording started... Speak now!", 'info-message');
+                startRecordingBtn.disabled = true;
+                stopRecordingBtn.disabled = false;
+                transcribedTextOutput.value = ''; // Clear previous text
+            };
+
+            recognition.onresult = (event) => {
+                let interimTranscript = '';
+                let finalTranscript = '';
+
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalTranscript += event.results[i][0].transcript;
+                    } else {
+                        interimTranscript += event.results[i][0].transcript;
+                    }
+                }
+                transcribedTextOutput.value = finalTranscript + interimTranscript; // Show both final and interim
+            };
+
+            recognition.onerror = (event) => {
+                isRecording = false;
+                setStatus(`Speech recognition error: ${event.error}`, 'error-message');
+                startRecordingBtn.disabled = false;
+                stopRecordingBtn.disabled = true;
+            };
+
+            recognition.onend = () => {
+                if (isRecording) { // If onend fires without explicit stop, it's finished listening
+                    isRecording = false;
+                    setStatus("Recording ended. Click 'Start Recording' to speak again.", 'info-message');
+                    startRecordingBtn.disabled = false;
+                    stopRecordingBtn.disabled = true;
+                }
+            };
+
+            return recognition;
+        }
+
+        function startRecording() {
+            if (!recognition) {
+                recognition = initializeSpeechRecognition();
+                if (!recognition) return;
+            }
+            recognition.start();
+        }
+
+        function stopRecording() {
+            if (recognition && isRecording) {
+                recognition.stop();
+                isRecording = false;
+                setStatus("Recording stopped. Finalizing transcription...", 'success-message');
+                startRecordingBtn.disabled = false;
+                stopRecordingBtn.disabled = true;
+            }
+        }
+
+        function clearText() {
+            transcribedTextOutput.value = '';
+            setStatus("Ready to record.", 'info-message');
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initializeSpeechRecognition);
+        
+        // Ensure speech is stopped if user navigates away or closes tab
+        window.onbeforeunload = function() {
+            if (recognition && isRecording) {
+                recognition.stop();
+            }
+        };
+    </script>
+</body>
+</html>
