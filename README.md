@@ -10,13 +10,13 @@ A Flask-based web application that combines key Natural Language Processing (NLP
 ![Home Screen](images/homescrren.png)
 
 ### 🎤 Voice to Text (Speech Recognition)
-![Voice to Text](static/voice%20to%20text.png)
+![Voice to Text](images/voice%20to%20text.png)
 
 ### 🔊 Text to Voice (Text-to-Speech)
-![Text to Voice](static/text%20to%20voice.png)
+![Text to Voice](images/text%20to%20voice.png)
 
 ### ✍️ Text Summarizer
-![Text Summarizer](static/textsummarizer.png)
+![Text Summarizer](images/textsummarizer.png)
 
 ---
 
