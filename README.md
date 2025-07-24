@@ -7,7 +7,7 @@ A Flask-based web application that combines key Natural Language Processing (NLP
 ## 🖼️ App Screenshots
 
 ### 🏠 Home Screen
-![Home Screen](static/homescrren.png)
+![Home Screen](images/homescrren.png)
 
 ### 🎤 Voice to Text (Speech Recognition)
 ![Voice to Text](static/voice%20to%20text.png)
